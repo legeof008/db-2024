@@ -179,6 +179,7 @@ VALUES ('game');
 CREATE USER contributor;
 CREATE USER torrent_admin PASSWORD 'passwd';
 
+-- Views
 
 DROP VIEW IF EXISTS all_shares;
 CREATE VIEW all_shares AS
@@ -249,5 +250,33 @@ SELECT COUNT(first_used_ip) FROM all_ips_by_user WHERE first_used_ip << '100.43.
 ALTER SCHEMA torrent OWNER TO torrent_admin;
 GRANT SELECT ON share_movie_details TO contributor;
 
-SELECT usename
-FROM pg_user;
+-- Function
+CREATE OR REPLACE FUNCTION is_ip_in_ranges_puresql(ip_address INET, range_starts INET[], range_ends INET[])
+    RETURNS BOOLEAN AS $$
+SELECT EXISTS (
+    SELECT 1
+    FROM UNNEST(range_starts, range_ends) AS ranges(start_ip, end_ip)
+    WHERE ip_address BETWEEN start_ip AND end_ip
+);
+$$ LANGUAGE sql;
+
+-- Alterations
+ALTER TABLE torrent.share
+    DROP CONSTRAINT share_resource_id_fkey,
+    ADD CONSTRAINT share_resource_id_fkey FOREIGN KEY (resource_id) REFERENCES torrent.resource (id) ON DELETE CASCADE;
+
+ALTER TABLE torrent.game_instance
+    DROP CONSTRAINT game_instance_share_id_fkey,
+    ADD CONSTRAINT game_instance_share_id_fkey FOREIGN KEY (share_id) REFERENCES torrent.share (resource_id) ON DELETE CASCADE;
+
+ALTER TABLE torrent.film_instance
+    DROP CONSTRAINT film_instance_share_id_fkey,
+    ADD CONSTRAINT film_instance_share_id_fkey FOREIGN KEY (share_id) REFERENCES torrent.share (resource_id) ON DELETE CASCADE;
+
+ALTER TABLE torrent.book_instance
+    DROP CONSTRAINT book_instance_share_id_fkey,
+    ADD CONSTRAINT book_instance_share_id_fkey FOREIGN KEY (share_id) REFERENCES torrent.share (resource_id) ON DELETE CASCADE;
+
+ALTER TABLE torrent.music_instance
+    DROP CONSTRAINT music_instance_share_id_fkey,
+    ADD CONSTRAINT music_instance_share_id_fkey FOREIGN KEY (share_id) REFERENCES torrent.share (resource_id) ON DELETE CASCADE;
