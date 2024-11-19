@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Define your database and schema
+DB_NAME="postgres"
+SCHEMA_NAME="torrent"
+OUTPUT_DIR="/dumps"
+
+# Connect to the database and get the list of tables
+psql -U postgres -d $DB_NAME -t -c "SELECT table_name FROM information_schema.tables WHERE table_schema = '$SCHEMA_NAME'" | while read table; do
+    # Skip empty lines
+    if [[ ! -z "$table" ]]; then
+        # Use \COPY to dump each table to a separate CSV file
+        echo "Exporting $table to $OUTPUT_DIR/$table.csv"
+        psql -U postgres -d $DB_NAME -c "\COPY (SELECT * FROM $SCHEMA_NAME.$table) TO '$OUTPUT_DIR/$table.csv' WITH CSV HEADER"
+    fi
+done
+

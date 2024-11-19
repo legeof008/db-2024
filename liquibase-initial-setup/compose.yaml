@@ -1,0 +1,28 @@
+services:
+  database:
+    image: postgres_cron:17
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${PASSWORD}
+      POSTGRES_DB: ${DB}
+      POSTGRES_CRON_DB: ${POSTGRES_CRON_DB}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  migration:
+    image: liquibase
+    depends_on:
+      - database
+    environment:
+      LIQUIBASE_COMMAND_URL: jdbc:postgresql://database:5432/${DB}
+      LIQUIBASE_COMMAND_USERNAME: postgres
+      LIQUIBASE_COMMAND_PASSWORD: ${PASSWORD}
+      LIQUIBASE_COMMAND_CHANGELOG_FILE: changelog/changelog.yaml
+      LIQUIBASE_DRIVER: org.postgresql.Driver
+    volumes:
+      - ./changelog:/liquibase/changelog
+    command: update
+
+volumes:
+  db-data:
