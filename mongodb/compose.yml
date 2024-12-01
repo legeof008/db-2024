@@ -9,7 +9,8 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: example
     ports:
       - 27017:27017
-
+    volumes:
+      - "$PWD/mongo-entrypoint/:/docker-entrypoint-initdb.d/"
   mongo-express:
     image: mongo-express
     restart: always
